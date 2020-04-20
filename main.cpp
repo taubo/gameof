@@ -18,6 +18,7 @@ template <typename T> struct Grid {
     unsigned height;
 
     Grid();
+    Grid(unsigned w, unsigned h);
     void add(const T &cell);
     T get(unsigned x, unsigned y);
     void set(const T& cell, unsigned x, unsigned y);
@@ -28,10 +29,11 @@ template <typename T> struct Grid {
 };
 
 template <typename T>
-Grid<T>::Grid()
+Grid<T>::Grid(unsigned w, unsigned h)
     :width(20), height(20)
 {
-    // grid.
+    width = w;
+    height = h;
 }
 
 template <typename T>
@@ -43,7 +45,11 @@ void Grid<T>::add(const T &cell)
 template <typename T>
 T Grid<T>::get(unsigned x, unsigned y)
 {
-    return grid[x + y * width];
+    if (x < width && y < height) {
+        return grid[x + y * width];
+    } else {
+	throw "out of bound\n";
+    }
 }
 
 template <typename T>
@@ -59,24 +65,18 @@ std::vector<T> Grid<T>::get_neighbours(unsigned x, unsigned y)
 
     T elem;
 
-    elem = get(x - 1, y - 1);
-    neighbours.push_back(elem);
-    elem = get(x, y - 1);
-    neighbours.push_back(elem);
-    elem = get(x + 1, y - 1);
-    neighbours.push_back(elem);
-
-    elem = get(x - 1, y);
-    neighbours.push_back(elem);
-    elem = get(x + 1, y);
-    neighbours.push_back(elem);
-
-    elem = get(x - 1, y + 1);
-    neighbours.push_back(elem);
-    elem = get(x, y + 1);
-    neighbours.push_back(elem);
-    elem = get(x + 1, y + 1);
-    neighbours.push_back(elem);
+    for (int i = -1; i < 2; ++i) {
+        for (int j = -1; j < 2; ++j) {
+	    if (i == 0 && j == 0)
+		continue;
+	    try {
+		elem = get(x + i, y + j);
+		neighbours.push_back(elem);
+	    } catch (const char *msg) {
+		// std::cout << msg;
+	    }
+	}
+    }
 
     return neighbours;
 }
@@ -116,8 +116,8 @@ void update_grid(Grid<Cell> &grid)
 {
     Grid<Cell> _grid = grid;
 
-    for (unsigned rows = 1; rows < grid.width; rows++) {
-        for (unsigned cols = 1; cols < grid.height; cols++) {
+    for (unsigned rows = 0; rows < grid.width; rows++) {
+        for (unsigned cols = 0; cols < grid.height; cols++) {
             unsigned alive = 0;
             std::vector<Cell> neighbours_vec = grid.get_neighbours(cols, rows);
             for (Cell c : neighbours_vec) {
@@ -143,7 +143,7 @@ void update_grid(Grid<Cell> &grid)
     grid = _grid;
 }
 
-const unsigned frame_period = 1000;
+const unsigned frame_period = 500;
 const unsigned default_w = 200;
 const unsigned default_h = 200;
 
@@ -152,10 +152,10 @@ int main(void)
     std::cout << "game_of\n";
     bool is_exit = false;
 
-    Grid<Cell> grid;
+    Grid<Cell> grid(40, 40);
     std::cout << grid.width << " " << grid.height << "\n";
 
-    for (unsigned i = 0; i < 20 * 20; ++i) {
+    for (unsigned i = 0; i < 40 * 40; ++i) {
         Cell cell;
         cell.state = DEAD;
         grid.add(cell);
